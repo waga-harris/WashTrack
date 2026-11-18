@@ -43,12 +43,31 @@ export default function Dashboard() {
 
       <View style={styles.card}>
         <Text style={css.heading}>Quick Actions</Text>
-        <AppButton title="+ Create Laundry Order"
-          onPress={() => router.push("/create-order")} />
-        <AppButton title="Manage Customers" secondary
-          onPress={() => router.navigate("/customers")} />
-        <AppButton title="View Laundry Orders" secondary
-          onPress={() => router.navigate("/orders")} />
+
+        <AppButton
+          title="+ Create Laundry Order"
+          onPress={() => router.push("/create-order")}
+        />
+
+        <AppButton
+          title="Manage Customers"
+          secondary
+          onPress={() => router.navigate("/customers")}
+        />
+
+        <AppButton
+          title="View Laundry Orders"
+          secondary
+          onPress={() => router.navigate("/orders")}
+        />
+
+        {role === "Owner/Admin" && (
+          <AppButton
+            title="Reports & Analytics"
+            secondary
+            onPress={() => router.push("/reports")}
+          />
+        )}
       </View>
 
       <View style={styles.card}>

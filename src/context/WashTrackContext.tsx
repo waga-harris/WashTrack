@@ -29,6 +29,13 @@ export type Service = {
   price: number;
 };
 
+export type PaymentRecord = {
+  id: string;
+  amount: number;
+  method: string;
+  paidAt: string;
+};
+
 export type LaundryOrder = {
   id: string;
   customerId: string;
@@ -37,9 +44,13 @@ export type LaundryOrder = {
   weight: number;
   total: number;
   status: OrderStatus;
+
   paymentAmount: number;
   paymentMethod: string;
   paymentStatus: "Unpaid" | "Partial" | "Paid";
+
+  paymentHistory: PaymentRecord[];
+
   createdAt: string;
 };
 
@@ -172,8 +183,12 @@ export function WashTrackProvider({
           const savedServices: Service[] =
             data.services ?? defaultServices;
 
-          const savedOrders: LaundryOrder[] =
-            data.orders ?? [];
+          const savedOrders: LaundryOrder[] = (
+            data.orders ?? []
+          ).map((order: any) => ({
+            ...order,
+            paymentHistory: order.paymentHistory ?? [],
+          }));
 
           setCustomers(savedCustomers);
           setServices(savedServices);
@@ -232,20 +247,36 @@ export function WashTrackProvider({
     loaded,
   ]);
 
-  // Register a new customer.
-  function addCustomer(
-    name: string,
-    phone: string
-  ) {
-    setCustomers((previous) => [
+ // Register a new customer with a short Customer ID.
+function addCustomer(
+  name: string,
+  phone: string
+) {
+  setCustomers((previous) => {
+    const highestNumber = previous.reduce(
+      (highest, customer) => {
+        const match = /^C-(\d+)$/.exec(customer.id);
+
+        return match
+          ? Math.max(highest, Number(match[1]))
+          : highest;
+      },
+      0
+    );
+
+    const newCustomerId =
+      `C-${String(highestNumber + 1).padStart(5, "0")}`;
+
+    return [
       ...previous,
       {
-        id: newId("C"),
+        id: newCustomerId,
         name: name.trim(),
         phone: phone.trim(),
       },
-    ]);
-  }
+    ];
+  });
+}
 
   // Add a new laundry service.
   function addService(
@@ -271,9 +302,9 @@ export function WashTrackProvider({
       previous.map((service) =>
         service.id === id
           ? {
-              ...service,
-              price,
-            }
+            ...service,
+            price,
+          }
           : service
       )
     );
@@ -326,6 +357,7 @@ export function WashTrackProvider({
       paymentAmount: 0,
       paymentMethod: "",
       paymentStatus: "Unpaid",
+      paymentHistory: [],
       createdAt: new Date().toISOString(),
     };
 
@@ -367,9 +399,9 @@ export function WashTrackProvider({
       previous.map((item) =>
         item.id === id
           ? {
-              ...item,
-              status: STATUS_FLOW[index + 1],
-            }
+            ...item,
+            status: STATUS_FLOW[index + 1],
+          }
           : item
       )
     );
@@ -377,7 +409,6 @@ export function WashTrackProvider({
     return true;
   }
 
-  // Record a customer payment.
   function recordPayment(
     id: string,
     amount: number,
@@ -387,17 +418,13 @@ export function WashTrackProvider({
       (item) => item.id === id
     );
 
-    if (
-      !order ||
-      order.paymentStatus === "Paid"
-    ) {
+    if (!order || order.paymentStatus === "Paid") {
       return false;
     }
 
     const remaining =
       Math.round(
-        (order.total - order.paymentAmount) *
-          100
+        (order.total - order.paymentAmount) * 100
       ) / 100;
 
     if (
@@ -409,6 +436,9 @@ export function WashTrackProvider({
       return false;
     }
 
+    const roundedAmount =
+      Math.round(amount * 100) / 100;
+
     setOrders((previous) =>
       previous.map((item) => {
         if (item.id !== id) {
@@ -417,18 +447,29 @@ export function WashTrackProvider({
 
         const paid =
           Math.round(
-            (item.paymentAmount + amount) *
-              100
+            (item.paymentAmount + roundedAmount) * 100
           ) / 100;
+
+        const paymentRecord: PaymentRecord = {
+          id:
+            "PAY-" +
+            Date.now().toString() +
+            Math.random().toString(36).slice(2, 6),
+          amount: roundedAmount,
+          method: method.trim(),
+          paidAt: new Date().toISOString(),
+        };
 
         return {
           ...item,
           paymentAmount: paid,
-          paymentMethod: method,
+          paymentMethod: method.trim(),
           paymentStatus:
-            paid >= item.total
-              ? "Paid"
-              : "Partial",
+            paid >= item.total ? "Paid" : "Partial",
+          paymentHistory: [
+            ...(item.paymentHistory ?? []),
+            paymentRecord,
+          ],
         };
       })
     );
@@ -436,31 +477,31 @@ export function WashTrackProvider({
     return true;
   }
 
-  return (
-    <Context.Provider
-      value={{
-        role,
-        loaded,
-        customers,
-        services,
-        orders,
+return (
+  <Context.Provider
+    value={{
+      role,
+      loaded,
+      customers,
+      services,
+      orders,
 
-        login: setRole,
+      login: setRole,
 
-        logout: () => setRole(null),
+      logout: () => setRole(null),
 
-        addCustomer,
-        addService,
-        updateService,
+      addCustomer,
+      addService,
+      updateService,
 
-        addOrder,
-        updateStatus,
-        recordPayment,
-      }}
-    >
-      {children}
-    </Context.Provider>
-  );
+      addOrder,
+      updateStatus,
+      recordPayment,
+    }}
+  >
+    {children}
+  </Context.Provider>
+);
 }
 
 export function useWashTrack() {

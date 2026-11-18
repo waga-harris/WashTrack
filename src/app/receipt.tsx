@@ -29,15 +29,51 @@ export default function Receipt() {
         <View style={css.line} />
         <Text>Order Number: {order.id}</Text>
         <Text>Customer: {order.customerName}</Text>
-        <Text>Date: {new Date(order.createdAt).toLocaleDateString()}</Text>
         <Text>Service: {order.serviceName}</Text>
         <Text>Weight: {order.weight} kg</Text>
 
         <View style={css.line} />
-        <Text style={css.total}>Total: {peso(order.total)}</Text>
-        <Text>Amount Paid: {peso(order.paymentAmount)}</Text>
-        <Text>Payment Method: {order.paymentMethod}</Text>
-        <Text>Payment Status: {order.paymentStatus}</Text>
+        <Text style={css.total}>
+          Total: {peso(order.total)}
+        </Text>
+
+        <Text>
+          Amount Paid: {peso(order.paymentAmount)}
+        </Text>
+
+        <Text>
+          Remaining Balance:{" "}
+          {peso(Math.max(0, order.total - order.paymentAmount))}
+        </Text>
+
+        <Text>
+          Payment Status: {order.paymentStatus}
+        </Text>
+
+        <View style={css.line} />
+
+        <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+          Payment History
+        </Text>
+
+        {(order.paymentHistory ?? []).map((payment) => (
+          <View
+            key={payment.id}
+            style={{ marginBottom: 10 }}
+          >
+            <Text>
+              Amount: {peso(payment.amount)}
+            </Text>
+
+            <Text>
+              Method: {payment.method}
+            </Text>
+
+            <Text>
+              Date: {new Date(payment.paidAt).toLocaleString()}
+            </Text>
+          </View>
+        ))}
 
         <View style={css.line} />
         <Text style={css.center}>Thank you for choosing WashTrack!</Text>

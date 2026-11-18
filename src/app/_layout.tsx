@@ -13,6 +13,7 @@ export default function RootLayout() {
         <Stack.Screen name="payment" />
         <Stack.Screen name="receipt" />
         <Stack.Screen name="track" />
+        <Stack.Screen name="reports" />
       </Stack>
     </WashTrackProvider>
   );
