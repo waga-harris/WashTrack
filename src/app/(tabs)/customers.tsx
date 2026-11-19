@@ -12,17 +12,24 @@ export default function Customers() {
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
 
-  function save() {
-    if (!name.trim() || !phone.trim()) {
-      setMessage("Please complete all fields.");
-      return;
-    }
-
-    addCustomer(name, phone);
-    setName("");
-    setPhone("");
-    setMessage("Customer registered successfully.");
+  
+function save() {
+  if (!name.trim() || !phone.trim()) {
+    setMessage("Please complete all fields.");
+    return;
   }
+
+  if (!/^09\d{9}$/.test(phone.trim())) {
+    setMessage("Enter a valid 11-digit mobile number.");
+    return;
+  }
+
+  addCustomer(name, phone);
+  setName("");
+  setPhone("");
+  setMessage("Customer registered successfully.");
+}
+
 
   const filtered = customers.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
