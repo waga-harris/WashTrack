@@ -16,8 +16,8 @@ export default function Welcome() {
 
       <Text style={css.description}>
         Manage customers, laundry orders, payments,
-        and daily laundry operations in one place.
-      </Text>
+       and daily laundry operations in one place.
+        </Text>
 
       <View style={{ width: 240 }}>
         <AppButton
